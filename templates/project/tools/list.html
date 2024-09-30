@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+{% include 'header.html' %}
+<body>
+<div id="segment_id">
+    {% include 'menu.html' %}
+    <div class="ui grid">
+        <div class="ui column" style="width: 75px; padding-top: 50px;">
+            {% include 'project/sidebar.html' %}
+        </div>
+
+        <script>
+            $(document).ready(function () {
+                $('#tools_tabs .item').tab({
+                    history: true
+                });
+
+                $('#import_table').DataTable({
+                    "aaSorting": [],
+                    "iDisplayLength": -1,
+                    "searching": true,
+                    "paging": false,
+                    "info": false,
+                    "order": [[0, 'asc']],
+                    "padding": false,
+                    'columnDefs': [
+                        {
+                            'targets': 0,
+                            'searchable': true,
+                            'orderable': false,
+                        },
+                        {
+                            'targets': 1,
+                            'searchable': true,
+                            'orderable': false,
+                        },
+                        {
+                            'targets': 2,
+                            'searchable': false,
+                            'orderable': false,
+                        }]
+                });
+
+                $('#export_table').DataTable({
+                    "aaSorting": [],
+                    "iDisplayLength": -1,
+                    "searching": true,
+                    "order": [[0, 'asc']],
+                    "paging": false,
+                    "info": false,
+                    "padding": false,
+                    'columnDefs': [
+                        {
+                            'targets': 0,
+                            'searchable': true,
+                            'orderable': false,
+                        },
+                        {
+                            'targets': 1,
+                            'searchable': true,
+                            'orderable': false,
+                        },
+                        {
+                            'targets': 2,
+                            'searchable': false,
+                            'orderable': false,
+                        }]
+                });
+
+                $('#scanners_table').DataTable({
+                    "aaSorting": [],
+                    "iDisplayLength": -1,
+                    "searching": true,
+                    "order": [[0, 'asc']],
+                    "paging": false,
+                    "info": false,
+                    "padding": false,
+                    'columnDefs': [
+                        {
+                            'targets': 0,
+                            'searchable': true,
+                            'orderable': false,
+                        },
+                        {
+                            'targets': 1,
+                            'searchable': true,
+                            'orderable': false,
+                        },
+                        {
+                            'targets': 2,
+                            'searchable': false,
+                            'orderable': false,
+                        }]
+                });
+
+                $('#sniffers_table').DataTable({
+                    "aaSorting": [],
+                    "iDisplayLength": -1,
+                    "order": [[0, 'asc']],
+                    "searching": true,
+                    "paging": false,
+                    "info": false,
+                    "padding": false,
+                    'columnDefs': [
+                        {
+                            'targets': 0,
+                            'searchable': true,
+                            'orderable': false,
+                        },
+                        {
+                            'targets': 1,
+                            'searchable': true,
+                            'orderable': false,
+                        },
+                        {
+                            'targets': 2,
+                            'searchable': false,
+                            'orderable': false,
+                        }]
+                });
+
+                $('#helpers_table').DataTable({
+                    "aaSorting": [],
+                    "iDisplayLength": -1,
+                    "searching": true,
+                    "paging": false,
+                    "order": [[0, 'asc']],
+                    "info": false,
+                    "padding": false,
+                    'columnDefs': [
+                        {
+                            'targets': 0,
+                            'searchable': true,
+                            'orderable': false,
+                        },
+                        {
+                            'targets': 1,
+                            'searchable': true,
+                            'orderable': false,
+                        },
+                        {
+                            'targets': 2,
+                            'searchable': false,
+                            'orderable': false,
+                        }]
+                });
+            });
+        </script>
+        <style>
+            table.display {
+                width: 60%;
+                margin: 0; /* <- works for me this way ****/
+            }
+
+            tr.odd {
+                background-color: #fffdc2;
+            }
+
+            tr.even {
+                background-color: #c3ffcd;
+            }
+        </style>
+        <div class="ui column" style="width: calc(100% - 75px)">
+            <h1 class="ui dividing header">Tools</h1>
+            <div class="ui container" style="width: 100%">
+                <div class="ui top attached tabular menu" id="tools_tabs">
+                    <div class="active item" data-tab="import"><i class="upload icon"></i>Import tools</div>
+                    <div class="item" data-tab="export"><i class="download icon"></i>Export tools</div>
+                    <div class="item" data-tab="scanners"><i class="crosshairs icon"></i>Scanners</div>
+                    <div class="item" data-tab="sniffers"><i class="wifi icon"></i>Sniffers</div>
+                    <div class="item" data-tab="helpers"><i class="question circle outline icon"></i>Helpers</div>
+                </div>
+                <div class="ui bottom attached active tab segment" data-tab="import">
+                    <table class="ui table" id="import_table">
+                        <thead>
+                        <tr id="table_header">
+                            <th><h4>name</h4></th>
+                            <th><h4>description</h4></th>
+                            <th style="width:100px"></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td><h4>Nmap</h4></td>
+                            <td><h4>Nmap (Network Mapper) is a free and open-source network scanner created by Gordon
+                                Lyon. Nmap is used to discover hosts and services on a computer network by sending
+                                packets and analyzing the responses.</h4></td>
+                            <td><a class="ui button blue" href="nmap/" style="width:100px;"><i class="share icon"></i>Open</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><h4>Masscan</h4></td>
+                            <td><h4>MASSCAN is TCP port scanner which transmits SYN packetsasynchronously and produces
+                                results similar to nmap, the mostfamous port scanner. Internally, it operates more like
+                                scanrand,unicornscan, and ZMap, using asynchronous transmission. It&#x27;s aflexible
+                                utility that allows arbitrary address and port ranges.</h4></td>
+                            <td><a class="ui button blue" href="nmap/" style="width:100px;"><i class="share icon"></i>Open</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><h4>Burp Suite Enterprise Edition</h4></td>
+                            <td><h4>Burp Scanner which was scaled for the enterprise.</h4></td>
+                            <td><a class="ui button blue" href="burp_enterprise/" style="width:100px;"><i
+                                    class="share icon"></i>Open</a></td>
+                        </tr>
+                        <tr>
+                            <td><h4>Nuclei</h4></td>
+                            <td><h4>Fast and customizable vulnerability scanner based on simple YAML based DSL.</h4>
+                            </td>
+                            <td><a class="ui button blue" href="nuclei/" style="width:100px;"><i class="share icon"></i>Open</a>
+                            </td>
+                        </tr>
+                        {% for plugin_info in tools_list %}
+                            <tr>
+                                <td><h4>{{ plugin_info['name'] }}</h4></td>
+                                <td><h4>{{ plugin_info['description'] | safe }}</h4></td>
+                                <td><a class="ui button blue" href="{{ plugin_info['route']  }}" style="width:100px;"><i
+                                        class="share icon"></i>Open</a></td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="ui bottom attached tab segment" data-tab="export">
+                    <table class="ui table" id="export_table">
+                        <thead>
+                        <tr id="table_header">
+                            <th><h4>name</h4></th>
+                            <th><h4>description</h4></th>
+                            <th style="width:100px"></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td><h4>Exporter</h4></td>
+                            <td><h4>Export hosts and ports with special rules</h4></td>
+                            <td><a class="ui button blue" href="exporter/" style="width:100px;"><i
+                                    class="share icon"></i>Open</a></td>
+                        </tr>
+                        <tr>
+                            <td><h4>Duplicator</h4></td>
+                            <td><h4>Copy project settings to another ccf project: hosts, hostnames, issues, files,
+                                notes, testers, credentials.</h4></td>
+                            <td><a class="ui button blue" href="duplicator/" style="width:100px;"><i
+                                    class="share icon"></i>Open</a></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="ui bottom attached tab segment" data-tab="scanners">
+                    <table class="ui table" id="scanners_table">
+                        <thead>
+                        <tr id="table_header">
+                            <th><h4>name</h4></th>
+                            <th><h4>description</h4></th>
+                            <th style="width:100px"></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td><h4>ipwhois</h4></td>
+                            <td><h4>ipwhois is a Python package focused on retrieving and parsing whois datafor IPv4 and
+                                IPv6 addresses.</h4></td>
+                            <td><a class="ui button blue" href="ipwhois/" style="width:100px;"><i
+                                    class="share icon"></i>Open</a></td>
+                        </tr>
+                        <tr>
+                            <td><h4>shodan</h4></td>
+                            <td><h4>Shodan is a search engine that lets the user find specific types of computers
+                                (webcams, routers, servers, etc.) connected to the internet using a variety of
+                                filters.</h4></td>
+                            <td><a class="ui button blue" href="shodan/" style="width:100px;"><i class="share icon"></i>Open</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><h4>whois</h4></td>
+                            <td><h4>python-whois is a Python package focused on retrieving and parsing whois data for
+                                domains.</h4></td>
+                            <td><a class="ui button blue" href="whois/" style="width:100px;"><i class="share icon"></i>Open</a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="ui bottom attached tab segment" data-tab="sniffers">
+                    <table class="ui table" id="sniffers_table">
+                        <thead>
+                        <tr id="table_header">
+                            <th><h4>name</h4></th>
+                            <th><h4>description</h4></th>
+                            <th style="width:100px"></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td><h4>HTTP</h4></td>
+                            <td><h4>Capture HTTP-requests and save them.</h4></td>
+                            <td style="width: 100px;"><a class="ui button blue" href="http-sniffer/"
+                                                         style="width:100px;"><i class="share icon"></i>Open</a></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="ui bottom attached tab segment" data-tab="helpers">
+                    <table class="ui table" id="helpers_table">
+                        <thead>
+                        <tr id="table_header">
+                            <th><h4>name</h4></th>
+                            <th><h4>description</h4></th>
+                            <th style="width:100px"></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td><h4>NMAP command generator</h4></td>
+                            <td><h4>Generate NMAP command.</h4></td>
+                            <td><a class="ui button blue" href="nmap-helper/" style="width:100px;"><i
+                                    class="share icon"></i>Open</a></td>
+                        </tr>
+                        <tr>
+                            <td><h4>MSFvenom command generator</h4></td>
+                            <td><h4>Generate MSFvenom command.</h4></td>
+                            <td><a class="ui button blue" href="msfvenom-helper/" style="width:100px;"><i
+                                    class="share icon"></i>Open</a></td>
+                        </tr>
+                        <tr>
+                            <td><h4>Blackdagger command generator</h4></td>
+                            <td><h4>Generate Blackdagger YAML command.</h4></td>
+                            <td><a class="ui button blue" href="blackdagger-helper/" style="width:100px;"><i
+                                    class="share icon"></i>Open</a></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% include 'footer.html' %}
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,4 @@
+ip,hostname1,hostname2
+{% for host_ip in hosts -%}
+{{ host_ip }}{% for hostname_id in hosts[host_ip]['hostnames'] %},{{hostnames[hostname_id]['hostname']}}{% endfor %}
+{% endfor %}

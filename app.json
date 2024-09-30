@@ -1,0 +1,28 @@
+{
+  "name": "CART collaboration framework",
+  "description": "Toolkit for CART collaboration",
+  "repository": "https://gitlab.com/",
+  "logo": "https://raw.githubusercontent.com/ErdemOzgen/blackdagger/main/assets/images/blackdaggerReadme.png",
+  "keywords": [
+    "ccf",
+    "python",
+    "pentest",
+    "collaboration",
+    "security"
+  ],
+  "env": {
+    "BASIC_AUTH_LOGIN": {
+        "description": "Login for basic authorization (leave this field blank if don't want to turn on basic authorization).",
+        "required": false,
+        "value": ""
+    },
+    "BASIC_AUTH_PASSWORD": {
+        "description": "Password for basic authorization (leave this field blank if don't want to turn on basic authorization).",
+        "required": false,
+        "value": ""
+    }
+  },
+  "addons": [
+    "heroku-postgresql"
+  ]
+}

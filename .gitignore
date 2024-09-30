@@ -1,8 +1,34 @@
+# Created by .ignore support plugin (hsz.mobi)
+.idea/
+/examples.py
+/configuration/server.crt
+/configuration/server.key
+/tmp_storage/*
+/flask_session/*
+/configuration/*.sqlite*
+/static/files/code/*
+/static/files/fields/*
+!/static/files/fields/empty
+!/static/files/code/empty
+/static/files/poc/*
+!/static/files/poc/empty
+/static/files/templates/*
+!/static/files/templates/empty
+/__pycache__/
+**/__pychache__/
+/backups/db/*.sqlite3
+/venv/
+*.log
+ngrok_url.txt
+./backups/db/*.sqlite3
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+./flask_session/*
 
+**/__pycache__/
+configuration/database.sqlite3
 # C extensions
 *.so
 
