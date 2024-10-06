@@ -3385,3 +3385,174 @@ for module_name in modules:
                         endpoint=route_name + "_post",
                         view_func=create_view_func(import_plugin_form, import_plugin, path_to_module),
                         methods=["POST"])
+
+
+@routes.route('/project/<uuid:project_id>/tools/subhttpx/', methods=['GET'])
+@requires_authorization
+@check_session
+@check_project_access
+@send_log_data
+def subhttpx_page(project_id, current_project, current_user):
+    return render_template('project/tools/import/subhttpx.html',
+                           current_project=current_project,
+                           tab_name='subhttpx')
+
+
+@routes.route('/project/<uuid:project_id>/tools/subhttpx/', methods=['POST'])
+@requires_authorization
+@check_session
+@check_project_access
+@check_project_archived
+@send_log_data
+def subhttpx_page_form(project_id, current_project, current_user):
+    form = SubHttpxForm()
+    form.validate()
+    errors = []
+    if form.errors:
+        for field in form.errors:
+            for error in form.errors[field]:
+                errors.append(error)
+
+    if not errors:
+
+        hostnames_dict = {}
+        ports_dict = {}
+
+        # json files
+        for file in form.json_files.data:
+            if file.filename:
+                data = file.read().decode("utf-8")
+                fixed_data = re.sub(r'(\{.*?\})(?=\{)', r'\1,', data.replace("\n", ""))
+                fixed_data = f"[{fixed_data}]"
+
+                scan_result = json.loads(fixed_data)
+                for hostname_row in scan_result:
+                    tech_list = ""
+
+                    hostname = hostname_row['input'] if 'input' in hostname_row else ''
+                    # print(f"Domain: {hostname}")
+                    hostname_location = hostname_row['location'] if 'location' in hostname_row else ''
+                    # print(f"URL: {hostname_location}")
+                    host_ip = hostname_row['a'] if 'a' in hostname_row else ''
+                    host_ip = host_ip[0]
+                    # print(f"IP Address: {host_ip}")
+                    host_port = hostname_row['port'] if 'port' in hostname_row else ''
+                    # print(f"Port: {host_port}")
+                    hostname_webserver = hostname_row['webserver'] if 'webserver' in hostname_row else ''
+                    # print(f"Webserver Info: {hostname_webserver}")
+                    hostname_status_code = hostname_row['status_code'] if 'status_code' in hostname_row else ''
+                    # print(f"Status Code: {hostname_status_code}")
+                    host_tech = hostname_row['tech'] if 'tech' in hostname_row else ''
+
+                    for tech in host_tech:
+                        if tech == host_tech[-1]:
+                            tech_list += tech
+                        else:
+                            tech_list += tech + ", "
+                    
+                    host_tech = tech_list
+
+                    # print(host_tech)
+
+                    '''
+                    1. Name <--> Address
+                    2. Target <--> Address
+                    3. Name <--> String
+
+                    (Port, Type)
+                    '''
+
+                    if hostname != '' and host_ip != '':
+                        # 1. Name <--> Address
+                        if hostname == '':
+                            if hostname not in hostnames_dict:
+                                hostnames_dict[hostname] = {
+                                    'ip': [host_ip],
+                                    'description': 'Type: {}'.format(hostname)
+                                }
+                            else:
+                                if host_ip not in hostnames_dict[hostname]['ip']:
+                                    hostnames_dict[hostname]['ip'].append(host_ip)
+                        # 1. Name <--> Address <--> Target
+                        else:
+                            if hostname not in hostnames_dict:
+                                hostnames_dict[hostname] = {
+                                    'ip': [host_ip],
+                                    'description': 'Type: {}\nTech: {}'.format(hostname, host_tech)
+                                }
+                    elif hostname_location != '' and host_ip == '' and hostname_webserver != '':
+                        # Name <--> String
+                        if hostname_location not in hostnames_dict:
+                            hostnames_dict[hostname_location] = {
+                                'ip': [],
+                                'description': 'Type: {}\nTech: {}'.format(hostname_webserver, host_tech)
+                            }
+                        else:
+                            hostnames_dict[hostname_location]['description'] += '\nType: {}\Tech: {}'.format(hostname_webserver,
+                                                                                                          host_tech)
+                    elif hostname != '' and host_ip != '' and hostname_location == '':
+                        # Target <--> Address
+                        if hostname not in hostnames_dict:
+                            hostnames_dict[hostname] = {
+                                'ip': [host_ip],
+                                'description': 'Type: {}'.format(hostname_webserver),
+                            }
+                    # add ports
+                    if host_port != '' and host_ip != '':
+                        if host_ip not in ports_dict:
+                            ports_dict[host_ip] = [host_port]
+                        else:
+                            if host_port not in ports_dict[host_ip]:
+                                ports_dict[host_ip].append(host_port)
+
+       
+        # hostnames_dict = {'google.com':{'ip':[8.8.8.8], 'description': '...' }}
+
+        for hostname in hostnames_dict:
+            ip_array = hostnames_dict[hostname]['ip']
+            description = hostnames_dict[hostname]['description']
+            for ip_address in ip_array:
+                # check if valid ip
+                ip_obj = ipaddress.ip_address(ip_address)
+                if (':' not in ip_address) or (':' in ip_address and not form.ignore_ipv6.data):
+
+                    current_host = db.select_project_host_by_ip(current_project['id'], ip_address)
+                    if not current_host:
+                        host_id = db.insert_host(current_project['id'], ip_address, current_user['id'],
+                                                 form.hosts_description.data)
+                    else:
+                        host_id = current_host[0]['id']
+
+                    current_hostname = db.select_ip_hostname(host_id, hostname)
+                    if not current_hostname:
+                        hostname_id = db.insert_hostname(host_id, hostname, description, current_user['id'])
+                    else:
+                        hostname_id = current_hostname[0]['id']
+                        db.update_hostname(hostname_id, description)
+
+        # ports_dict = {'ip':['8888']}
+        for ip_address in ports_dict:
+            # check if valid ip
+            ports_arr = list(set(ports_dict[ip_address]))
+            ip_obj = ipaddress.ip_address(ip_address)
+            if (':' not in ip_address) or (':' in ip_address and not form.ignore_ipv6.data):
+                current_host = db.select_project_host_by_ip(current_project['id'], ip_address)
+                if not current_host:
+                    host_id = db.insert_host(current_project['id'], ip_address, current_user['id'],
+                                             form.hosts_description.data)
+                else:
+                    host_id = current_host[0]['id']
+
+                for port_num in ports_arr:
+                    port_num_int = int(port_num)
+                    if port_num_int > 0 and port_num_int < 65536:
+                        current_port = db.select_host_port(host_id, int(port_num), is_tcp=True)
+                        if not current_port:
+                            port_id = db.insert_host_port(host_id, port_num_int, True, 'unknown',
+                                                          form.ports_description.data, current_user['id'],
+                                                          current_project['id'])
+
+    return render_template('project/tools/import/subhttpx.html',
+                           current_project=current_project,
+                           tab_name='subhttpx',
+                           errors=errors)
