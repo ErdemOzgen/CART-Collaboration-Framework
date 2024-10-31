@@ -74,6 +74,19 @@ def create_db():
         print('Error with creating table Teams')
     conn.commit()
 
+    # create table - Technologies
+    try:
+        cursor.execute('''CREATE TABLE IF NOT EXISTS Technologies
+                         (
+                         id text PRIMARY KEY,
+                         host_id text,
+                         technology text,
+                         user_id text
+                          );''')
+    except psycopg2.errors.DuplicateTable:
+        print('Error with creating table Technologies')
+    conn.commit()
+
     # create table - Logs
     try:
         cursor.execute('''CREATE TABLE IF NOT EXISTS Logs
