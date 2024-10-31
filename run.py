@@ -1,7 +1,8 @@
 import runners.fastwsgi_server
 from system.config_load import config_dict
 from runners import fastwsgi_server, flask_server, waitress_server
-
+from system.db_initiation import create_db
+from os import path
 
 
 
@@ -16,6 +17,15 @@ print('''
  ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝   
                                  
       ''')
+
+# Check if the database exists; if not, create it
+db_path = 'configuration/database.sqlite3'
+if not path.exists(db_path):
+    print("Database not found. Creating a new one...")
+    create_db()
+else:
+    print("Database already exists. Skipping creation.")
+
 
 config = config_dict()
 run_func = None
