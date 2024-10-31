@@ -328,7 +328,7 @@ def host_page_form(project_id, host_id, current_project, current_user):
                 errors.append('Port is in another host!')
             else:
                 db.delete_port_safe(current_port[0]['id'])
-
+    
     if 'update_description' in request.form:
         if 'Submit' in request.form and request.form['Submit'] == 'Delete':
             ports = db.select_host_ports(current_host['id'], full=True)
@@ -426,7 +426,7 @@ def host_page_form(project_id, host_id, current_project, current_user):
             hostnames = db.find_ip_hostname(current_host['id'],
                                             form.hostname.data)
             if hostnames:
-                db.update_hostname(hostnames[0]['id'], form.comment.data)
+                db.update_hostname(hostnames[0]['id'], form.hostname.data)
             else:
                 hostname_id = db.insert_hostname(current_host['id'],
                                                  form.hostname.data,
@@ -437,6 +437,59 @@ def host_page_form(project_id, host_id, current_project, current_user):
                                current_project=current_project,
                                current_host=current_host,
                                add_hostname_errors=errors,
+                               tab_name=current_host['ip'])
+
+    if 'add_technology' in request.form:
+        form = AddTechnology()
+        form.validate()
+        errors = []
+        print(form.data)
+        print(form.technology_id.data)
+        print(form.technology.data)
+
+        if form.errors:
+            for field in form.errors:
+                errors += form.errors[field]
+
+
+        if not errors:
+            technologies = db.check_host_technology_id(current_host['id'],
+                                              form.technology_id.data)
+            print(f"technologies:{technologies}")
+            if technologies:
+                db.update_technology(technologies[0]['id'], form.technology.data)
+            else:
+                db.insert_technology(current_host['id'],
+                                                 form.technology.data,
+                                                 session['id'])
+
+        return render_template('project/hosts/host.html',
+                               current_project=current_project,
+                               current_host=current_host,
+                               add_technology_errors=errors,
+                               tab_name=current_host['ip'])
+    
+    if 'delete_technology' in request.form:
+        form = DeleteTechnology()
+        form.validate()
+        errors = []
+        if form.errors:
+            for field in form.errors:
+                errors += form.errors[field]
+
+        if not errors:
+            found = db.check_host_technology_id(current_host['id'],
+                                              form.technology_id.data)
+            if not found:
+                errors.append('Technology ID in this host not found!')
+
+        if not errors:
+            db.delete_technology(form.technology_id.data)
+
+        return render_template('project/hosts/host.html',
+                               current_project=current_project,
+                               current_host=current_host,
+                               delete_hostname_errors=errors,
                                tab_name=current_host['ip'])
 
     if 'delete_hostname' in request.form:

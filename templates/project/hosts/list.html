@@ -178,6 +178,10 @@
                         "sType": "string",
                         render: trim_column
                     },
+                    {
+                        "sType": "string",
+                        render: trim_column
+                    },
                 ],
                 'columnDefs': [{
                     'targets': 0,
@@ -389,7 +393,7 @@
             background-color: lightgrey;
         }
 
-        #custom-clickable-row {
+        .custom-clickable-row {
             cursor: pointer;
         }
 
@@ -406,7 +410,7 @@
                         network=request.args.get('network'), ip_hostname=request.args.get('ip_hostname'),
                         issue_name=request.args.get('issue_name'),
                         port=request.args.get('port'), service=request.args.get('service'),
-                        comment=request.args.get('comment'), threats=request.args.getlist('threats[]') ) %}
+                        comment=request.args.get('comment'),technology=request.args.get('technology'), threats=request.args.getlist('threats[]') ) %}
             <h1 class="ui dividing header">Hosts: {{ len(host_array) }}</h1>
             <div class="ui container" style="width: 100%; float: left;">
                 <form class="ui form" id="search_form" style="display: none; min-height: 0px;" method="get"
@@ -631,7 +635,8 @@
                     <th>ip-address</th>
                     <th>hostnames</th>
                     <th>comment</th>
-                    <th style="width: 230px;">threats</th>
+                    <th>technology</th>
+                    <th style="width: 140px;">threats</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -665,6 +670,19 @@
                                     <i class="apple big icon"></i>{% elif 'win' in host['os'].lower() -%}
                                     <i class="windows blue big icon"></i>{% elif 'lin' in host['os'].lower() %}
                                     <i class="linux very big black icon"></i>{% endif -%}{{ (host['comment']) }}</h4>
+                        </td>
+                        <td style="word-break: break-all;">
+                            <h4>
+                                {% for technology in db.select_technology(host['id']) -%}
+                                    {% set tech_list = technology['technology'] -%}
+                                    {% if tech_list -%}
+                                        {% set tech_list_new = tech_list.split(", ") -%}
+                                        {% for tech_bullet in tech_list_new -%}
+                                            <li>{{ (tech_bullet) }}</li>
+                                        {% endfor -%}                                         
+                                    {% endif -%}  
+                                {% endfor -%}
+                            </h4>
                         </td>
                         <td>
                             {% set threats = json_unpack(host['threats']) %}
