@@ -71,8 +71,35 @@
                     ]
                 }
             );
-
+            
             $('#hostnames_list').DataTable(
+                {
+                    "order": [[0, "asc"]],
+                    "iDisplayLength": -1,
+                    "searching": false,
+                    "paging": false,
+                    "info": false,
+                    "bAutoWidth": false,
+                    "padding": false,
+                    "aocolumnDefs": [
+                        {
+                            "sType": "string"
+                        },
+                        {
+                            "sType": "string"
+                        },
+                        null
+                    ],
+                    "columnDefs": [
+                        {
+                            "orderable": false,
+                            targets: 2
+                        }
+                    ]
+                }
+            );
+
+            $('#technology_list').DataTable(
                 {
                     "order": [[0, "asc"]],
                     "iDisplayLength": -1,
@@ -296,6 +323,20 @@
     {% set files = db.select_host_files(current_host['id']) %}
     {% set notes_arr = db.select_project_notes(current_project['id'], current_host['id']) %}
     {% set networks = db.select_network_by_ip(current_project['id'], current_host['ip']) %}
+    {% set technologies = db.select_technology(current_host['id']) %}
+    {% set len_of_tech = namespace(c=0) %}
+
+    {% for technology in technologies %}
+        {% if technology['id'] %}
+            {% if not technology['technology'] or technology['technology'].strip() == "" %}
+                {% set len_of_tech.c = len_of_tech.c + 0 %}
+            {% else %}
+                {% set tech_len = technology['technology'].split(", ") | length %}
+                {% set len_of_tech.c = len_of_tech.c + tech_len %}
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+
     <div class="ui grid" style="height:100%">
         <div class="ui column" style="width: 75px; padding-top: 50px;">
             {% include 'project/sidebar.html' %}
@@ -355,6 +396,15 @@
                                 {% endif %}
                                 <a class="item" data-tab="networks" style="padding-left: 26px;">
                                     Networks <i class="sitemap icon"></i>
+                                </a>
+                                {% if technologies %}
+                                    {% if len_of_tech.c == 0 %}
+                                    {% else %}
+                                    <i class="ui teal circular label mini left" style="float:left;margin-top: 10px;">{{ len_of_tech.c }}</i>
+                                    {% endif %}
+                                {% endif %}
+                                <a class="item" data-tab="technologies" style="padding-left: 26px;">
+                                    Technology <i class="technology icon"></i>
                                 </a>
                             </div>
                         </div>
@@ -1361,6 +1411,150 @@
                                 {% endfor %}
                                 </tbody>
                             </table>
+                        </div>
+                        <div class="ui tab" data-tab="technologies">
+                            <script>
+                                $(document).ready(function () {
+                                    // Tab Initialization
+                                    $('.menu .item').tab({
+                                        history: true
+                                    });
+                                });
+                            
+                                // Function to handle the edit and delete actions for technology
+                                function submitTechnologyAction(number, technology_id, action, technology = '') {
+                                    if (action === 'Delete') {
+                                        if (deletePrompt(this, `Are you sure to delete all technology ${technology}?`) === false) {
+                                            return false;
+                                        }
+                                        $.ajax({
+                                            url: `/project/{{current_project['id']}}/host/{{current_host['id']}}/technologies`,
+                                            type: 'post',
+                                            async: false,
+                                            cache: false,
+                                            data: {
+                                                'csrf_token': '{{ csrf_token() }}',
+                                                'technology_id': technology_id,
+                                                'delete_technology': 1
+                                            },
+                                            success: function (data) {
+                                                $('body').toast({
+                                                    class: 'success',
+                                                    position: 'bottom right',
+                                                    message: `Technology ${technology} was deleted!`
+                                                });
+                                                window.location.reload(true); // Refresh after deletion
+                                            }
+                                        });
+                                    } else if (action === 'Edit') {
+                                        // Assuming you would update the hostname through an input field
+                                        let updatedHostname = $(`#hostname_${number}`).text();
+                                        if (deletePrompt(this, `Did you save the technology list before editing?`) === false) {
+                                            return false;
+                                        }
+                                        $.ajax({
+                                            url: `/project/{{current_project['id']}}/host/{{current_host['id']}}/technologies`,
+                                            type: 'post',
+                                            async: false,
+                                            cache: false,
+                                            data: {
+                                                'csrf_token': '{{ csrf_token() }}',
+                                                'hostname_id': hostname_id,
+                                                'hostname': updatedHostname,
+                                                'edit_technology': 1
+                                            },
+                                            success: function (data) {
+                                                $('body').toast({
+                                                    class: 'success',
+                                                    position: 'bottom right',
+                                                    message: `Hostname ${hostname} was updated!`
+                                                });
+                                            }
+                                        });
+                                    }
+                                }
+                            
+                                // Delete confirmation prompt
+                                function deletePrompt(func, message) {
+                                    return confirm(message);
+                                }
+                            
+                                // Copy hostname to the form for editing (or inline editing)
+                                function copy_technology() {
+                                    var element = document.getElementById('add_technology_form');
+                                    element.scrollIntoView({block: 'start', behavior: 'smooth'});
+                                }
+
+                            </script>                            
+                            <table class="ui table" id="technology_list">
+                                <thead>
+                                <tr>
+                                    <th>IP Address</th>
+                                    <th>Technology</th>
+                                    <th style="width:205px;">Action</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+
+                                
+                                {% for technology in technologies %}
+                                    {% if technology['id'] %} 
+                                        {% if technology['technology'] %}   
+                                            <tr>
+                                                <td style="word-break: break-all; white-space:pre-wrap;">{{ (current_host['ip']) }}</td>
+                                                <td id="technology_" style="word-break: break-all; white-space:pre-wrap;">{{ (technology['technology']) }}</td>    
+                                                <td style="width:205px;">
+                                                    <form style="width:135px; float: left;" method="post"
+                                                        action="/project/{{ current_project['id'] }}/host/{{ current_host['id'] }}/#/technologies"
+                                                        onsubmit="return delete_prompt(this,'Are you sure to delete technology list for {{ (current_host['ip']) }}?')">
+                                                        <input type="hidden" name="delete_technology" value="1"/>
+                                                        <input type="hidden" name="technology_id" value="{{ technology['id'] }}">
+                                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                                        <button type="submit" class="ui vertical animated button red">
+                                                            <div class="hidden content">Delete</div>
+                                                            <div class="visible content">
+                                                                <i class="trash icon"></i>
+                                                            </div>
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        {% endif %}    
+                                    {% endif %}
+                                {% endfor %} 
+                                </tbody>
+                            </table>
+                            <h3 class="ui dividing header">Create Technology:</h3>
+                            <form id="add_technology_form" class="ui form" method="post"
+                                  action="/project/{{ current_project['id'] }}/host/{{ current_host['id'] }}/#/technologies">
+                                <input type="hidden" name="add_technology" value="1"/>
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <input type="hidden" name="technology_id" value="{{ technologies['id'] }}">
+                                <div class="three fields">
+                                    <div class="ui field">
+                                        <label>Technology:</label>
+                                        <input placeholder="Apache ..." name="technology" id="technology_field" required>
+                                    </div>
+                                    <div class="ui field">
+                                        <button type="submit" name="Submit" value="Submit" class="ui button blue"
+                                                style="margin-top:24px;"><i class="upload icon"></i>Submit
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                            {% if add_technology_errors is defined and add_technology_errors %}
+                                <div class="ui error message visible">
+                                    <i class="close icon"></i>
+                                    <div class="header">
+                                        There were some errors with technology
+                                    </div>
+                                    <ul class="list">
+                                        {% for error in add_technology_errors %}
+                                            <li>{{ error }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            {% endif %}
                         </div>
                         <div style="height:200px"></div>
                         <div class="host_footer"

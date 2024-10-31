@@ -882,6 +882,13 @@ class Database:
         for hostname in hostnames:
             self.delete_hostname_safe(hostname['id'])
 
+
+        #delete technologies
+        technologies = self.select_technology(host_id)
+        for technology in technologies:
+            self.delete_technology(technology['id'])
+
+
         # delete network paths
         self.delete_path_by_host(project_id=project_id,
                                  host_id=current_host['id'])
@@ -994,7 +1001,28 @@ class Database:
             'Added hostname {} to host {}'.format(
                 hostname, self.select_host(host_id)[0]['ip']))
         return hostname_id
-
+    
+    def insert_technology(self, host_id, technology, user_id):
+        technology_id = gen_uuid()
+        self.execute(
+            '''INSERT INTO Technologies(
+            id,host_id,technology,user_id) 
+               VALUES (?,?,?,?)''',
+            (technology_id, host_id, technology, user_id)
+        )
+        self.conn.commit()
+        self.insert_log(
+            'Added technology {} to host {}'.format(
+                technology, self.select_host(host_id)[0]['ip']))
+        return technology_id
+    
+    def update_technology(self, technology_id, technology):
+        self.execute(
+            '''UPDATE Technologies SET technology=? WHERE id=?''',
+            (technology, technology_id))
+        self.conn.commit()
+        return
+    
     def update_hostname(self, hostname_id, description):
         self.execute(
             '''UPDATE Hostnames SET description=? WHERE id=?''',
@@ -1011,6 +1039,13 @@ class Database:
             (host_id, hostname_id))
         result = self.return_arr_dict()
         return result
+    
+    def check_host_technology_id(self, host_id, technology_id):
+        self.execute(
+            '''SELECT * FROM Technologies WHERE host_id=? AND id=?''',
+            (host_id, technology_id))
+        result = self.return_arr_dict()
+        return result
 
     def delete_hostname(self, hostname_id):
         current_hostname = self.select_hostname(hostname_id)[0]
@@ -1021,6 +1056,14 @@ class Database:
         self.insert_log(
             'Deleted hostname {}'.format(current_hostname['hostname']))
         return
+    
+    def delete_technology(self, technology_id):
+        current_technology = self.select_technology(technology_id)
+        print(current_technology)
+        self.execute(
+            '''DELETE FROM Technologies WHERE id=?''',
+            (technology_id,))
+        self.conn.commit()
 
     def check_port_in_project(self, project_id, port_id):
         self.execute(
@@ -1044,17 +1087,37 @@ class Database:
             (hostname_id,))
         result = self.return_arr_dict()
         return result
+    
+    def select_technology_with_id(self, tech_id):
+        self.execute(
+            '''SELECT * FROM Technologies WHERE id=?''',
+            (tech_id,))
+        result = self.return_arr_dict()
+        return result
+    
+    def select_technology(self, host_id):
+        self.execute(
+            '''SELECT * FROM Technologies WHERE host_id=?''',
+            (host_id,))
+        
+        result = self.return_arr_dict()
+
+        if result:
+            return result
+        else:
+            return ""
 
     def select_hostname_with_host_id(self, hostname_id, host_id):
         self.execute(
             '''SELECT * FROM Hostnames WHERE id=? and host_id=?''',
             (hostname_id, host_id))
+        
         result = self.return_arr_dict()
         return result
 
     def select_project_hostname(self, project_id, hostname_id):
         self.execute(
-            '''SELECT * FROM Hostnames WHERE id=? and  host_id IN (select id from Hosts WHERE project_id=?)''',
+            '''SELECT * FROM Hostnames WHERE id=? and host_id IN (select id from Hosts WHERE project_id=?)''',
             (hostname_id, project_id))
         result = self.return_arr_dict()
         return result
@@ -2330,17 +2393,19 @@ class Database:
         return hosts
 
     def search_hostlist(self, project_id=None, network='', ip_hostname='',
-                        issue_name='', port='', service='', comment='',
+                        issue_name='', port='', service='', comment='', technology='',
                         threats=''):
         all_hosts = self.select_project_hosts(project_id)
 
         if not network and not ip_hostname and not issue_name and not port and \
-                not service and not comment and not threats:
+                not service and not comment and not technology and not threats:
             return all_hosts
 
+        print(all_hosts)
         # host filter
         if not ip_hostname:
             ip_hostname_result = all_hosts
+            print(ip_hostname_result)
         else:
             self.execute(
                 '''SELECT * FROM Hosts WHERE ((ip LIKE '%' || ? || '%') and 
@@ -2348,6 +2413,7 @@ class Database:
                 project_id=? and lower(hostname) LIKE lower('%' || ? || '%'))''',
                 (ip_hostname, project_id, project_id, ip_hostname))
             ip_hostname_result = self.return_arr_dict()
+            print(ip_hostname_result)
 
         # network filter
         if not network:
@@ -2391,6 +2457,22 @@ class Database:
             for host in all_hosts:
                 if comment.lower() in host['comment'].lower():
                     comment_result.append(host)
+
+  
+        # technology filter
+        if not technology:
+            technology_result = all_hosts
+            print(technology_result)
+        else:
+            self.execute(
+                '''SELECT * FROM Hosts WHERE ((ip LIKE '%' || ? || '%') and 
+                (project_id = ?)) or id IN (SELECT host_id FROM Technologies WHERE 
+                project_id=? and lower(technology) LIKE lower('%' || ? || '%'))''',
+                (ip_hostname, project_id, project_id, ip_hostname))
+            technology_result = self.return_arr_dict()
+            print(technology_result)
+
+
 
         # threats filter
         if not threats:
@@ -2551,6 +2633,7 @@ class Database:
             (project_id, port_id))
         result = self.return_arr_dict()
         return result
+    
 
     def select_project_ports_unique(self, project_id):
         results = self.select_project_ports(project_id)
@@ -4780,4 +4863,4 @@ class Database:
         for issue_id in issues_to_delete:
             self.delete_issue_safe(project_id, issue_id)
 
-        return
+        returns

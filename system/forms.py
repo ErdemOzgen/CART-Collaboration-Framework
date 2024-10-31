@@ -191,12 +191,22 @@ class AddHostname(FlaskForm):
                                        check_hostname])
     comment = StringField('comment', default='')
 
+class AddTechnology(FlaskForm):
+    technology_id = StringField('technology_id')
+    technology = StringField('technology')
+
 
 class DeleteHostname(FlaskForm):
     hostname_id = StringField('hostname_id',
                               validators=[DataRequired(
                                   message='Hostname ID required!'),
                                   UUID(message='Wrong hostname-ID format!')])
+
+class DeleteTechnology(FlaskForm):
+    technology_id = StringField('technology_id',
+                              validators=[DataRequired(
+                                  message='Technology ID required!'),
+                                  UUID(message='Wrong technology-ID format!')])
 
 
 class NewIssue(FlaskForm):

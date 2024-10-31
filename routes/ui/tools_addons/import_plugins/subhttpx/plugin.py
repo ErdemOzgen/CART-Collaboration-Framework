@@ -43,11 +43,20 @@ tools_description = [
 ]
 
 class ToolArguments(FlaskForm):
-    json_files = MultipleFileField(label='json_files',
-                                   description="JSON-report",
-                                   default=None,
-                                   validators=[],
-                                   _meta={"display_row": 2, "display_column": 1, "file_extensions": ".json,.xml"})
+    json_files = MultipleFileField(
+        label='json_files',
+        description="JSON-report",
+        default=None,
+        validators=[],
+        _meta={"display_row": 2, "display_column": 1, "file_extensions": ".json"})
+    
+    scan_description = StringField(
+        label='scan_description',
+        description='New scan description',
+        default='Added from Subfinder and HTTPX',
+        validators=[],
+        _meta={"display_row": 2, "display_column": 2}
+    )
 
 
 def process_request(
@@ -106,23 +115,26 @@ def process_request(
                         if hostname not in hostnames_dict:
                             hostnames_dict[hostname] = {
                                 'ip': [host_ip],
-                                'description': 'Type: {}\nTech: {}'.format(hostname, host_tech)
+                                'description': 'Type: {}'.format(hostname),
+                                'technology': '{}'.format(host_tech)
                             }
                 elif hostname_location != '' and host_ip == '' and hostname_webserver != '':
                     if hostname_location not in hostnames_dict:
                         hostnames_dict[hostname_location] = {
                             'ip': [],
-                            'description': 'Type: {}\nTech: {}'.format(hostname_webserver, host_tech)
+                            'description': 'Type: {}'.format(hostname_webserver),
+                            'technology': '{}'.format(host_tech)
                         }
                     else:
-                        hostnames_dict[hostname_location]['description'] += '\nType: {}\Tech: {}'.format(
-                            hostname_webserver,
-                            host_tech)
+                        hostnames_dict[hostname_location]['description'] += '\nType: {}'.format(hostname_webserver)
+                        hostnames_dict[hostname_location]['technology'] += '{}'.format(host_tech)
+                            
                 elif hostname != '' and host_ip != '' and hostname_location == '':
                     if hostname not in hostnames_dict:
                         hostnames_dict[hostname] = {
                             'ip': [host_ip],
                             'description': 'Type: {}'.format(hostname_webserver),
+                            'technology': '{}'.format(host_tech)
                         }
                 if host_port != '' and host_ip != '':
                     if host_ip not in ports_dict:
@@ -131,16 +143,19 @@ def process_request(
                         if host_port not in ports_dict[host_ip]:
                             ports_dict[host_ip].append(host_port)
 
+
     for hostname in hostnames_dict:
         ip_array = hostnames_dict[hostname]['ip']
         description = hostnames_dict[hostname]['description']
+        technology = hostnames_dict[hostname]['technology']
+        
         for ip_address in ip_array:
             ip_obj = ipaddress.ip_address(ip_address)
             if (':' not in ip_address) or (':' in ip_address):
 
                 current_host = db.select_project_host_by_ip(current_project['id'], ip_address)
                 if not current_host:
-                    hosts_description = "Subfinder and HTTPX"
+                    hosts_description = input_dict['scan_description']
                     host_id = db.insert_host(current_project['id'], ip_address, current_user['id'],
                                              hosts_description)
                 else:
@@ -149,9 +164,13 @@ def process_request(
                 current_hostname = db.select_ip_hostname(host_id, hostname)
                 if not current_hostname:
                     hostname_id = db.insert_hostname(host_id, hostname, description, current_user['id'])
+                    technology_id = db.insert_technology(host_id, technology, current_user['id'])
+
                 else:
                     hostname_id = current_hostname[0]['id']
+                    technology_id = current_hostname[0]['id']
                     db.update_hostname(hostname_id, description)
+                    db.update_technology(technology_id, technology)
 
     for ip_address in ports_dict:
         ports_arr = set(ports_dict[ip_address])
@@ -159,7 +178,7 @@ def process_request(
         if (':' not in ip_address) or (':' in ip_address):
             current_host = db.select_project_host_by_ip(current_project['id'], ip_address)
             if not current_host:
-                hosts_description = "Subfinder and HTTPX"
+                hosts_description = input_dict['scan_description']
                 host_id = db.insert_host(current_project['id'], ip_address, current_user['id'],
                                          hosts_description)
             else:
@@ -170,7 +189,7 @@ def process_request(
                 if port_num_int > 0 and port_num_int < 65536:
                     current_port = db.select_host_port(host_id, int(port_num), is_tcp=True)
                     if not current_port:
-                        port_description = "Subfinder and HTTPX"
+                        port_description = input_dict['scan_description']
                         port_id = db.insert_host_port(host_id, port_num_int, True, 'unknown',
                                                       port_description, current_user['id'],
                                                       current_project['id'])
